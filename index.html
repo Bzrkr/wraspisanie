@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расписание</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .top-panel {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: #4a90d9;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+            transition: background 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: #357abd;
+        }
+
+        .date-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .info .current-date {
+            font-weight: 600;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .info .week-info {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .schedule-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .person-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .person-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #f0f0f0;
+            color: #222;
+        }
+
+        .person-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .meta-item {
+            font-size: 13px;
+            color: #555;
+            background: #f5f5f5;
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        .day-label {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .slots-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .slot {
+            background: #f8f9ff;
+            border-left: 4px solid #4a90d9;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .section {
+            grid-column: 1 / -1;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .section-title.on-shift {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .section-title.generic-shift {
+            background: #f5f5f5;
+            color: #555;
+        }
+
+        .section-title.shift-ended {
+            background: #f5f5f5;
+            color: #777;
+        }
+
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .week-table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .week-table-row {
+            display: grid;
+            grid-template-columns: 220px repeat(5, 1fr);
+            gap: 10px;
+            align-items: start;
+        }
+
+        .week-table-header {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f5f5f5;
+        }
+
+        .week-table-cell {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 90px;
+        }
+
+        .week-table-header .week-table-cell {
+            background: #eef2f7;
+            font-weight: 600;
+            font-size: 13px;
+            color: #44546a;
+            text-align: center;
+        }
+
+        .week-table-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #222;
+        }
+
+        .week-person-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .week-person-meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .week-slot-empty {
+            color: #999;
+            font-size: 13px;
+            font-style: italic;
+            padding-top: 4px;
+        }
+
+        .week-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .week-slot {
+            background: #f8f9ff;
+            border-left: 3px solid #4a90d9;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .person-card.shift-ended {
+            opacity: 0.65;
+            filter: grayscale(25%);
+        }
+
+        .person-card.shift-ended .person-name {
+            color: #777;
+        }
+
+        .no-schedule {
+            color: #999;
+            font-style: italic;
+            font-size: 14px;
+            padding: 8px 0;
+        }
+
+        .today-badge {
+            display: inline-block;
+            background: #4a90d9;
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .week-info {
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .week-info:hover {
+            text-decoration: underline;
+            color: #333;
+        }
+
+        .week-modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .week-modal-backdrop.open {
+            display: flex;
+        }
+
+        .week-modal {
+            background: #fff;
+            border-radius: 14px;
+            max-width: 1100px;
+            width: 100%;
+            max-height: 85vh;
+            overflow: auto;
+            padding: 18px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+
+        .week-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .week-modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #222;
+        }
+
+        .week-modal-close {
+            background: #f5f5f5;
+            border: none;
+            color: #333;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .week-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .week-table th,
+        .week-table td {
+            border: 1px solid #ececec;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .week-table th {
+            background: #f7f8fb;
+            color: #444;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .week-table td.name {
+            min-width: 180px;
+        }
+
+        .week-table .slot {
+            background: #f8f9ff;
+            border-left: 3px solid #4a90d9;
+            padding: 6px 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .week-table .empty {
+            color: #bbb;
+            font-style: italic;
+        }
+
+        .week-table .meta {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-panel">
+        <button class="nav-btn" id="prevDay">&lt;</button>
+        <input type="date" id="datePicker" class="date-input">
+        <button class="nav-btn" id="nextDay">&gt;</button>
+        <div class="info">
+            <div class="current-date" id="currentDateDisplay"></div>
+            <div class="week-info" id="weekDisplay"><span id="weekDisplayText"></span></div>
+        </div>
+    </div>
+
+    <div id="schedule" class="schedule-grid"></div>
+
+    <div class="week-modal-backdrop" id="weekModalBackdrop">
+        <div class="week-modal">
+            <div class="week-modal-header">
+                <div class="week-modal-title" id="weekModalTitle"></div>
+                <button class="week-modal-close" id="weekModalClose">&times;</button>
+            </div>
+            <div id="weekModalBody"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
